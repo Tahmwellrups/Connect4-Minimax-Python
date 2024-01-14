@@ -23,7 +23,7 @@ pygame.init()
 background_image = pygame.image.load("Connect4 BG.png")
 pygame.display.set_caption('Connecc 4')
 
-SQUARESIZE = 100
+SQUARESIZE = 85
 
 width = COLUMN_COUNT * SQUARESIZE
 height = (ROW_COUNT+1) * SQUARESIZE
@@ -78,15 +78,15 @@ def winning_move(board, piece):
 def draw_board(board):
 	for c in range(COLUMN_COUNT):
 		for r in range(ROW_COUNT):
-			pygame.draw.rect(screen, BLUE, (c*SQUARESIZE, r*SQUARESIZE+SQUARESIZE, SQUARESIZE, SQUARESIZE))
-			pygame.draw.circle(screen, BLACK, (int(c*SQUARESIZE+SQUARESIZE/2), int(r*SQUARESIZE+SQUARESIZE+SQUARESIZE/2)), RADIUS)
+			pygame.draw.rect(screen, BLUE, ((c*SQUARESIZE)+320, r*SQUARESIZE+SQUARESIZE, SQUARESIZE, SQUARESIZE))
+			pygame.draw.circle(screen, BLACK, ((int(c*SQUARESIZE+SQUARESIZE/2))+319, int(r*SQUARESIZE+SQUARESIZE+SQUARESIZE/2)), RADIUS)
 	
 	for c in range(COLUMN_COUNT):
 		for r in range(ROW_COUNT):		
 			if board[r][c] == 1:
-				pygame.draw.circle(screen, RED, (int(c*SQUARESIZE+SQUARESIZE/2), height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
+				pygame.draw.circle(screen, RED, ((int(c*SQUARESIZE+SQUARESIZE/2))+319, height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
 			elif board[r][c] == 2: 
-				pygame.draw.circle(screen, YELLOW, (int(c*SQUARESIZE+SQUARESIZE/2), height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
+				pygame.draw.circle(screen, YELLOW, ((int(c*SQUARESIZE+SQUARESIZE/2))+319, height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
 	pygame.display.update()
 
 def get_font(size): # Returns Press-Start-2P in the desired size
@@ -97,17 +97,6 @@ def player_vs_player():
     print_board(board)
     game_over = False
     turn = 0
-
-    pygame.init()
-
-    SQUARESIZE = 100
-
-    width = COLUMN_COUNT * SQUARESIZE
-    height = (ROW_COUNT+1) * SQUARESIZE
-
-    size = (width, height)
-
-    RADIUS = int(SQUARESIZE/2 - 5)
 
     screen.fill(BLACK)
     draw_board(board)
@@ -122,8 +111,13 @@ def player_vs_player():
                 sys.exit()
 
             if event.type == pygame.MOUSEMOTION:
-                pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
+                pygame.draw.rect(screen, BLACK, (319,0, width, SQUARESIZE))
+
                 posx = event.pos[0]
+                if posx <= 359:
+                    posx = 359
+                elif posx >= 874:
+                    posx = 874
                 if turn == 0:
                     pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
                 else: 
@@ -131,12 +125,17 @@ def player_vs_player():
             pygame.display.update()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
-                #print(event.pos)
+                pygame.draw.rect(screen, BLACK, (319,0, width, SQUARESIZE))
+                print(event.pos)
                 # Ask for Player 1 Input
                 if turn == 0:
                     posx = event.pos[0]
+                    if posx <= 359:
+                        posx = 359
+                    elif posx >= 874:
+                        posx = 874
                     col = int(math.floor(posx/SQUARESIZE))
+                    print(col)
 
                     if is_valid_location(board, col):
                         row = get_next_open_row(board, col)
@@ -151,7 +150,12 @@ def player_vs_player():
                 # # Ask for Player 2 Input
                 else:				
                     posx = event.pos[0]
+                    if posx <= 359:
+                        posx = 359
+                    elif posx >= 874:
+                        posx = 874
                     col = int(math.floor(posx/SQUARESIZE))
+                    print(col)
 
                     if is_valid_location(board, col):
                         row = get_next_open_row(board, col)
