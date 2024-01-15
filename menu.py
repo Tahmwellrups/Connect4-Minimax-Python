@@ -78,7 +78,7 @@ def winning_move(board, piece):
 def draw_board(board):
 	for c in range(COLUMN_COUNT):
 		for r in range(ROW_COUNT):
-			pygame.draw.rect(screen, BLUE, ((c*SQUARESIZE)+320, r*SQUARESIZE+SQUARESIZE, SQUARESIZE, SQUARESIZE))
+			pygame.draw.rect(screen, BLUE, ((c*SQUARESIZE)+319, r*SQUARESIZE+SQUARESIZE, SQUARESIZE, SQUARESIZE))
 			pygame.draw.circle(screen, BLACK, ((int(c*SQUARESIZE+SQUARESIZE/2))+319, int(r*SQUARESIZE+SQUARESIZE+SQUARESIZE/2)), RADIUS)
 	
 	for c in range(COLUMN_COUNT):
@@ -134,7 +134,7 @@ def player_vs_player():
                         posx = 359
                     elif posx >= 874:
                         posx = 874
-                    col = int(math.floor(posx/SQUARESIZE))
+                    col = int(math.floor((posx-319)/SQUARESIZE))
                     print(col)
 
                     if is_valid_location(board, col):
@@ -142,8 +142,8 @@ def player_vs_player():
                         drop_piece(board, row, col, 1)
 
                         if winning_move(board, 1):
-                            label = myfont.render("Player 1 wins!!", 1, RED)
-                            screen.blit(label, (40,10))
+                            label = myfont.render("Player 1 wins", 1, RED)
+                            screen.blit(label, (320,10))
                             game_over = True
 
 
@@ -154,7 +154,7 @@ def player_vs_player():
                         posx = 359
                     elif posx >= 874:
                         posx = 874
-                    col = int(math.floor(posx/SQUARESIZE))
+                    col = int(math.floor((posx-319)/SQUARESIZE))
                     print(col)
 
                     if is_valid_location(board, col):
@@ -162,8 +162,8 @@ def player_vs_player():
                         drop_piece(board, row, col, 2)
 
                         if winning_move(board, 2):
-                            label = myfont.render("Player 2 wins!!", 1, YELLOW)
-                            screen.blit(label, (40,10))
+                            label = myfont.render("Player 2 wins", 1, YELLOW)
+                            screen.blit(label, (320,10))
                             game_over = True
 
                 print_board(board)
@@ -212,11 +212,11 @@ def main_menu():
         menu_text_Rect.center = (screen_width//2, 100)
         
         PVP_BUTTON = Button(image=pygame.image.load("Button BG.png"), pos=(640, 250), 
-                            text_input="PLAYER VS PLAYER", font=get_font(53), base_color="#ffffff", hovering_color="#101B3B")
+                            text_input="PLAYER VS PLAYER", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
         PVAI_BUTTON = Button(image=pygame.image.load("Button BG.png"), pos=(640, 400), 
-                            text_input="PLAYER VS AI", font=get_font(53), base_color="#ffffff", hovering_color="#101B3B")
+                            text_input="PLAYER VS AI", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
         QUIT_BUTTON = Button(image=pygame.image.load("Quit Button BG.png"), pos=(640, 550), 
-                            text_input="QUIT", font=get_font(53), base_color="#ffffff", hovering_color="#101B3B")
+                            text_input="QUIT", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
         
         screen.blit(menu_text, menu_text_Rect)
         
