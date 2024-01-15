@@ -20,7 +20,7 @@ screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE
 
 pygame.init()
 
-background_image = pygame.image.load("Connect4 BG.png")
+background_image = pygame.image.load("resources/Connect4 BG.png")
 pygame.display.set_caption('Connecc 4')
 
 SQUARESIZE = 85
@@ -251,11 +251,11 @@ def main_menu():
         menu_text_Rect = menu_text.get_rect()
         menu_text_Rect.center = (screen_width//2, 100)
         
-        PVP_BUTTON = Button(image=pygame.image.load("Button BG.png"), pos=(640, 250), 
+        PVP_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(640, 250), 
                             text_input="PLAYER VS PLAYER", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
-        PVAI_BUTTON = Button(image=pygame.image.load("Button BG.png"), pos=(640, 400), 
+        PVAI_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(640, 400), 
                             text_input="PLAYER VS AI", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
-        QUIT_BUTTON = Button(image=pygame.image.load("Quit Button BG.png"), pos=(640, 550), 
+        QUIT_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(640, 550), 
                             text_input="QUIT", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
         
         screen.blit(menu_text, menu_text_Rect)
