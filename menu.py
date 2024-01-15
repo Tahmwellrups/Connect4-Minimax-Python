@@ -2,6 +2,7 @@ import numpy as np
 import pygame
 import sys
 import math
+import random
 from button import Button
 
 BG = pygame.Color("#203972")
@@ -14,13 +15,22 @@ WHITE = pygame.Color("#FFFFFF")
 ROW_COUNT = 6
 COLUMN_COUNT = 7
 
+PLAYER = 0
+AI = 1
+
+EMPTY = 0
+PLAYER_PIECE = 1
+AI_PIECE = 2
+
+WINDOW_LENGTH = 4
+
 screen_width = 1280
 screen_height = 720
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 
 pygame.init()
 
-background_image = pygame.image.load("resources/Connect4 BG.png")
+background_image = pygame.image.load("resources/Connect 4 BG.png")
 pygame.display.set_caption('Connecc 4')
 
 SQUARESIZE = 85
@@ -78,19 +88,164 @@ def winning_move(board, piece):
 def draw_board(board):
 	for c in range(COLUMN_COUNT):
 		for r in range(ROW_COUNT):
-			pygame.draw.rect(screen, BLUE, ((c*SQUARESIZE)+319, r*SQUARESIZE+SQUARESIZE, SQUARESIZE, SQUARESIZE))
-			pygame.draw.circle(screen, BLACK, ((int(c*SQUARESIZE+SQUARESIZE/2))+319, int(r*SQUARESIZE+SQUARESIZE+SQUARESIZE/2)), RADIUS)
+			pygame.draw.rect(screen, BLUE, ((c*SQUARESIZE)+344, r*SQUARESIZE+SQUARESIZE, SQUARESIZE, SQUARESIZE))
+			pygame.draw.circle(screen, BLACK, ((int(c*SQUARESIZE+SQUARESIZE/2))+344, int(r*SQUARESIZE+SQUARESIZE+SQUARESIZE/2)), RADIUS)
 	
 	for c in range(COLUMN_COUNT):
 		for r in range(ROW_COUNT):		
 			if board[r][c] == 1:
-				pygame.draw.circle(screen, RED, ((int(c*SQUARESIZE+SQUARESIZE/2))+319, height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
+				pygame.draw.circle(screen, RED, ((int(c*SQUARESIZE+SQUARESIZE/2))+344, height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
 			elif board[r][c] == 2: 
-				pygame.draw.circle(screen, YELLOW, ((int(c*SQUARESIZE+SQUARESIZE/2))+319, height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
+				pygame.draw.circle(screen, YELLOW, ((int(c*SQUARESIZE+SQUARESIZE/2))+344, height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
 	pygame.display.update()
 
 def get_font(size): # Returns Press-Start-2P in the desired size
     return pygame.font.SysFont('montserrat', size)
+
+def evaluate_window(window, piece):
+	score = 0
+	opp_piece = PLAYER_PIECE
+	if piece == PLAYER_PIECE:
+		opp_piece = AI_PIECE
+
+	if window.count(piece) == 4:
+		score += 100
+	elif window.count(piece) == 3 and window.count(EMPTY) == 1:
+		score += 5
+	elif window.count(piece) == 2 and window.count(EMPTY) == 2:
+		score += 2
+
+	if window.count(opp_piece) == 3 and window.count(EMPTY) == 1:
+		score -= 4
+
+	return score
+
+def score_position(board, piece):
+	score = 0
+
+	## Score center column
+	center_array = [int(i) for i in list(board[:, COLUMN_COUNT//2])]
+	center_count = center_array.count(piece)
+	score += center_count * 3
+
+	## Score Horizontal
+	for r in range(ROW_COUNT):
+		row_array = [int(i) for i in list(board[r,:])]
+		for c in range(COLUMN_COUNT-3):
+			window = row_array[c:c+WINDOW_LENGTH]
+			score += evaluate_window(window, piece)
+
+	## Score Vertical
+	for c in range(COLUMN_COUNT):
+		col_array = [int(i) for i in list(board[:,c])]
+		for r in range(ROW_COUNT-3):
+			window = col_array[r:r+WINDOW_LENGTH]
+			score += evaluate_window(window, piece)
+
+	## Score posiive sloped diagonal
+	for r in range(ROW_COUNT-3):
+		for c in range(COLUMN_COUNT-3):
+			window = [board[r+i][c+i] for i in range(WINDOW_LENGTH)]
+			score += evaluate_window(window, piece)
+
+	for r in range(ROW_COUNT-3):
+		for c in range(COLUMN_COUNT-3):
+			window = [board[r+3-i][c+i] for i in range(WINDOW_LENGTH)]
+			score += evaluate_window(window, piece)
+
+	return score
+
+def is_terminal_node(board):
+	return winning_move(board, PLAYER_PIECE) or winning_move(board, AI_PIECE) or len(get_valid_locations(board)) == 0
+
+def minimax(board, depth, alpha, beta, maximizingPlayer):
+	valid_locations = get_valid_locations(board)
+	is_terminal = is_terminal_node(board)
+	if depth == 0 or is_terminal:
+		if is_terminal:
+			if winning_move(board, AI_PIECE):
+				return (None, 100000000000000)
+			elif winning_move(board, PLAYER_PIECE):
+				return (None, -10000000000000)
+			else: # Game is over, no more valid moves
+				return (None, 0)
+		else: # Depth is zero
+			return (None, score_position(board, AI_PIECE))
+	if maximizingPlayer:
+		value = -math.inf
+		column = random.choice(valid_locations)
+		for col in valid_locations:
+			row = get_next_open_row(board, col)
+			b_copy = board.copy()
+			drop_piece(b_copy, row, col, AI_PIECE)
+			new_score = minimax(b_copy, depth-1, alpha, beta, False)[1]
+			if new_score > value:
+				value = new_score
+				column = col
+			alpha = max(alpha, value)
+			if alpha >= beta:
+				break
+		return column, value
+
+	else: # Minimizing player
+		value = math.inf
+		column = random.choice(valid_locations)
+		for col in valid_locations:
+			row = get_next_open_row(board, col)
+			b_copy = board.copy()
+			drop_piece(b_copy, row, col, PLAYER_PIECE)
+			new_score = minimax(b_copy, depth-1, alpha, beta, True)[1]
+			if new_score < value:
+				value = new_score
+				column = col
+			beta = min(beta, value)
+			if alpha >= beta:
+				break
+		return column, value
+
+def get_valid_locations(board):
+	valid_locations = []
+	for col in range(COLUMN_COUNT):
+		if is_valid_location(board, col):
+			valid_locations.append(col)
+	return valid_locations
+
+def pick_best_move(board, piece):
+
+	valid_locations = get_valid_locations(board)
+	best_score = -10000
+	best_col = random.choice(valid_locations)
+	for col in valid_locations:
+		row = get_next_open_row(board, col)
+		temp_board = board.copy()
+		drop_piece(temp_board, row, col, piece)
+		score = score_position(temp_board, piece)
+		if score > best_score:
+			best_score = score
+			best_col = col
+
+	return best_col
+
+def game_over_options():
+	
+    PVP_MOUSE_POS = pygame.mouse.get_pos()
+    PLAY_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(370, 600), text_input="PLAY AGAIN", font=get_font(64), base_color="#ffffff", hovering_color="#3E5AAA")
+    MENU_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(960, 640), text_input="MAIN MENU", font=get_font(64), base_color="#ffffff", hovering_color="#3E5AAA")
+	
+    for button in [PLAY_BUTTON, MENU_BUTTON]:
+        button.changeColor(PVP_MOUSE_POS)      
+        button.update(screen)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if PLAY_BUTTON.checkForInput(PVP_MOUSE_POS):
+                player_vs_player()
+            if MENU_BUTTON.checkForInput(PVP_MOUSE_POS):
+                main_menu()
+        
 
 def player_vs_player():
     board = create_board()
@@ -98,33 +253,25 @@ def player_vs_player():
     game_over = False
     turn = 0
 
-    screen.fill(BLACK)
+    pvp_bg = pygame.image.load("resources/PVP_BG.png")
+    screen.blit(pvp_bg, (0,0))
     draw_board(board)
     pygame.display.update()
 
-    myfont = pygame.font.SysFont("monospace", 75)
-
     while not game_over:
 
-        PVP_MOUSE_POS = pygame.mouse.get_pos()
-
-        PLAY_BUTTON = Button(image=None, pos=(370, 640), 
-                            text_input="PLAY AGAIN", font=get_font(64), base_color="#ffffff", hovering_color="#3E5AAA")
-        MENU_BUTTON = Button(image=None, pos=(960, 640), 
-                            text_input="MAIN MENU", font=get_font(64), base_color="#ffffff", hovering_color="#3E5AAA")
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
 
             if event.type == pygame.MOUSEMOTION:
-                pygame.draw.rect(screen, BLACK, (319,0, width, SQUARESIZE))
+                pygame.draw.rect(screen, BLACK, (344,0, width, SQUARESIZE))
 
                 posx = event.pos[0]
-                if posx <= 359:
-                    posx = 359
-                elif posx >= 874:
-                    posx = 874
+                if posx <= 384:
+                    posx = 384
+                elif posx >= 899:
+                    posx = 899
                 if turn == 0:
                     pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
                 else: 
@@ -132,17 +279,15 @@ def player_vs_player():
             pygame.display.update()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                pygame.draw.rect(screen, BLACK, (319,0, width, SQUARESIZE))
-                print(event.pos)
+                pygame.draw.rect(screen, BLACK, (344,0, width, SQUARESIZE))
                 # Ask for Player 1 Input
                 if turn == 0:
                     posx = event.pos[0]
-                    if posx <= 359:
-                        posx = 359
-                    elif posx >= 874:
-                        posx = 874
-                    col = int(math.floor((posx-319)/SQUARESIZE))
-                    print(col)
+                    if posx <= 384:
+                        posx = 384
+                    elif posx >= 899:
+                        posx = 899
+                    col = int(math.floor((posx-344)/SQUARESIZE))
 
                     if is_valid_location(board, col):
                         row = get_next_open_row(board, col)
@@ -151,34 +296,17 @@ def player_vs_player():
                         if winning_move(board, 1):
                             label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 1 WINS", 1, RED)
                             screen.blit(label, (445,5))                            
+                            game_over = True
                             
-                            for button in [PLAY_BUTTON, MENU_BUTTON]:
-                                button.changeColor(PVP_MOUSE_POS)
-                                label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 1 WINS", 1, RED)
-                                screen.blit(label, (445,5))       
-                                button.update(screen)
 
-                            for event in pygame.event.get():
-                                if event.type == pygame.QUIT:
-                                    pygame.quit()
-                                    sys.exit()
-                                if event.type == pygame.MOUSEBUTTONDOWN:
-                                    if PLAY_BUTTON.checkForInput(PVP_MOUSE_POS):
-                                        player_vs_player()
-                                    if MENU_BUTTON.checkForInput(PVP_MOUSE_POS):
-                                        game_over = True
-
-                            pygame.display.update()
-
-                # # Ask for Player 2 Input
+                # Ask for Player 2 Input
                 else:				
                     posx = event.pos[0]
-                    if posx <= 359:
-                        posx = 359
-                    elif posx >= 874:
-                        posx = 874
-                    col = int(math.floor((posx-319)/SQUARESIZE))
-                    print(col)
+                    if posx <= 384:
+                        posx = 384
+                    elif posx >= 899:
+                        posx = 899
+                    col = int(math.floor((posx-344)/SQUARESIZE))
 
                     if is_valid_location(board, col):
                         row = get_next_open_row(board, col)
@@ -187,24 +315,8 @@ def player_vs_player():
                         if winning_move(board, 2):
                             label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 2 WINS", 1, YELLOW)
                             screen.blit(label, (445,5))
-
-                            for button in [PLAY_BUTTON, MENU_BUTTON]:
-                                button.changeColor(PVP_MOUSE_POS)
-                                label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 2 WINS", 1, YELLOW)
-                                screen.blit(label, (445,5))
-                                button.update(screen)
-
-                            for event in pygame.event.get():
-                                if event.type == pygame.QUIT:
-                                    pygame.quit()
-                                    sys.exit()
-                                if event.type == pygame.MOUSEBUTTONDOWN:
-                                    if PLAY_BUTTON.checkForInput(PVP_MOUSE_POS):
-                                        player_vs_player()
-                                    if MENU_BUTTON.checkForInput(PVP_MOUSE_POS):
-                                        game_over = True
-
-                            pygame.display.update()
+                            game_over = True
+                            
 
                 print_board(board)
                 draw_board(board)
@@ -213,33 +325,90 @@ def player_vs_player():
                 turn = turn % 2
                 
                 if game_over:
-                    pygame.time.wait(3000)
-
+                    game_over_options()
+                    
+					
 def player_vs_ai():
-    while True:
-        PLAY_MOUSE_POS = pygame.mouse.get_pos()
+    board = create_board()
+    print_board(board)
+    game_over = False
 
-        screen.fill(BG)
+    pvp_bg = pygame.image.load("resources/PVP_BG.png")
+    screen.blit(pvp_bg, (0,0))
+    draw_board(board)
+    pygame.display.update()
 
-        PLAY_TEXT = get_font(45).render("This is the PLAY screen.", True, "White")
-        PLAY_RECT = PLAY_TEXT.get_rect(center=(640, 260))
-        screen.blit(PLAY_TEXT, PLAY_RECT)
+    turn = random.randint(PLAYER, AI)
 
-        PLAY_BACK = Button(image=None, pos=(640, 460), 
-                            text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
-
-        PLAY_BACK.changeColor(PLAY_MOUSE_POS)
-        PLAY_BACK.update(screen)
+    while not game_over:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if PLAY_BACK.checkForInput(PLAY_MOUSE_POS):
-                    main_menu()
 
-        pygame.display.update()
+            if event.type == pygame.MOUSEMOTION:
+                pygame.draw.rect(screen, BLACK, (344,0, width, SQUARESIZE))
+                posx = event.pos[0]
+                if posx <= 384:
+                        posx = 384
+                elif posx >= 899:
+                    posx = 899
+                if turn == PLAYER:
+                    pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
+            pygame.display.update()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pygame.draw.rect(screen, BLACK, (344,0, width, SQUARESIZE))
+                # Ask for Player 1 Input
+                if turn == PLAYER:
+                    posx = event.pos[0]
+                    if posx <= 384:
+                        posx = 384
+                    elif posx >= 899:
+                        posx = 899
+                    col = int(math.floor((posx-344)/SQUARESIZE))
+
+                    if is_valid_location(board, col):
+                        row = get_next_open_row(board, col)
+                        drop_piece(board, row, col, PLAYER_PIECE)
+
+                        if winning_move(board, PLAYER_PIECE):
+                            label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 1 WINS", 1, RED)
+                            screen.blit(label, (445,5))       
+                            game_over = True
+
+                        turn += 1
+                        turn = turn % 2
+
+                        print_board(board)
+                        draw_board(board)
+
+
+        # # Ask for Player 2 Input
+        if turn == AI and not game_over:				
+
+            #col = random.randint(0, COLUMN_COUNT-1)
+            #col = pick_best_move(board, AI_PIECE)
+            col, minimax_score = minimax(board, 5, -math.inf, math.inf, True)
+
+            if is_valid_location(board, col):
+                #pygame.time.wait(500)
+                row = get_next_open_row(board, col)
+                drop_piece(board, row, col, AI_PIECE)
+
+                if winning_move(board, AI_PIECE):
+                    label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 2 WINS", 1, YELLOW)
+                    screen.blit(label, (445,5))       
+                    game_over = True
+
+                print_board(board)
+                draw_board(board)
+
+                turn += 1
+                turn = turn % 2
+
+        if game_over:
+            game_over_options()
 
 def main_menu():
 
@@ -247,18 +416,13 @@ def main_menu():
     while running:
         screen.blit(background_image, (0,0))
         MENU_MOUSE_POS = pygame.mouse.get_pos()
-        menu_text = pygame.font.SysFont('fugaz one', 100).render('CONNECC4', True, WHITE)
-        menu_text_Rect = menu_text.get_rect()
-        menu_text_Rect.center = (screen_width//2, 100)
         
-        PVP_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(640, 250), 
+        PVP_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(960, 300), 
                             text_input="PLAYER VS PLAYER", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
-        PVAI_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(640, 400), 
+        PVAI_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(960, 450), 
                             text_input="PLAYER VS AI", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
-        QUIT_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(640, 550), 
+        QUIT_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(960, 600), 
                             text_input="QUIT", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
-        
-        screen.blit(menu_text, menu_text_Rect)
         
         for button in [PVP_BUTTON, PVAI_BUTTON, QUIT_BUTTON]:
             button.changeColor(MENU_MOUSE_POS)
