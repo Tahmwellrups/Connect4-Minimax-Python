@@ -226,25 +226,39 @@ def pick_best_move(board, piece):
 
 	return best_col
 
-def game_over_options():
+def game_over_options(board, label, mode):
 	
-    PVP_MOUSE_POS = pygame.mouse.get_pos()
-    PLAY_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(370, 600), text_input="PLAY AGAIN", font=get_font(64), base_color="#ffffff", hovering_color="#3E5AAA")
-    MENU_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(960, 640), text_input="MAIN MENU", font=get_font(64), base_color="#ffffff", hovering_color="#3E5AAA")
+    pvp_bg = pygame.image.load("resources/PVP_BG.png")
+    screen.blit(pvp_bg, (0,0))
+    draw_board(board)
+    screen.blit(label, (442,7))
 	
-    for button in [PLAY_BUTTON, MENU_BUTTON]:
-        button.changeColor(PVP_MOUSE_POS)      
-        button.update(screen)
+    # Your loop for checking events
+    while True:
+        PVP_MOUSE_POS = pygame.mouse.get_pos()
+        PLAY_BUTTON = Button(image=None, pos=(460, 650), text_input="PLAY AGAIN", font=get_font(40), base_color="#ffffff", hovering_color="#D32735")
+        MENU_BUTTON = Button(image=None, pos=(830, 650), text_input="MAIN MENU", font=get_font(40), base_color="#ffffff", hovering_color="#D32735")
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if PLAY_BUTTON.checkForInput(PVP_MOUSE_POS):
-                player_vs_player()
-            if MENU_BUTTON.checkForInput(PVP_MOUSE_POS):
-                main_menu()
+
+        for button in [PLAY_BUTTON, MENU_BUTTON]:
+            button.changeColor(PVP_MOUSE_POS)
+            button.update(screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if PLAY_BUTTON.checkForInput(PVP_MOUSE_POS):
+                    if mode == 1:
+                        player_vs_player()
+                    else:
+                        player_vs_ai()
+                elif MENU_BUTTON.checkForInput(PVP_MOUSE_POS):
+                    main_menu()
+		
+        pygame.display.flip()		
+        
         
 
 def player_vs_player():
@@ -294,9 +308,8 @@ def player_vs_player():
                         drop_piece(board, row, col, 1)
 
                         if winning_move(board, 1):
-                            label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 1 WINS", 1, RED)
-                            screen.blit(label, (445,5))                            
-                            game_over = True
+                            label = get_font(60).render("PLAYER 1 WINS!", 1, RED)                          
+                            game_over_options(board, label, 1)
                             
 
                 # Ask for Player 2 Input
@@ -313,9 +326,9 @@ def player_vs_player():
                         drop_piece(board, row, col, 2)
 
                         if winning_move(board, 2):
-                            label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 2 WINS", 1, YELLOW)
-                            screen.blit(label, (445,5))
-                            game_over = True
+                            label = get_font(60).render("PLAYER 2 WINS!", 1, YELLOW)
+                            game_over_options(board, label, 1)
+                            
                             
 
                 print_board(board)
@@ -325,7 +338,8 @@ def player_vs_player():
                 turn = turn % 2
                 
                 if game_over:
-                    pygame.time.wait(3000) # game_over_options()
+                    pygame.time.wait(3000) 
+                    
                     
 					
 def player_vs_ai():
@@ -373,9 +387,8 @@ def player_vs_ai():
                         drop_piece(board, row, col, PLAYER_PIECE)
 
                         if winning_move(board, PLAYER_PIECE):
-                            label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 1 WINS", 1, RED)
-                            screen.blit(label, (445,5))       
-                            game_over = True
+                            label = get_font(60).render("PLAYER 1 WINS!", 1, RED)                          
+                            game_over_options(board, label, 2)
 
                         turn += 1
                         turn = turn % 2
@@ -397,9 +410,8 @@ def player_vs_ai():
                 drop_piece(board, row, col, AI_PIECE)
 
                 if winning_move(board, AI_PIECE):
-                    label = pygame.font.SysFont('fugaz one', 50).render("PLAYER 2 WINS", 1, YELLOW)
-                    screen.blit(label, (445,5))       
-                    game_over = True
+                    label = get_font(60).render("PLAYER 2 WINS!", 1, YELLOW)                          
+                    game_over_options(board, label, 2)
 
                 print_board(board)
                 draw_board(board)
