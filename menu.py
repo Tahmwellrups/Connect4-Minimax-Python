@@ -100,7 +100,7 @@ def draw_board(board):
 	pygame.display.update()
 
 def get_font(size): # Returns Press-Start-2P in the desired size
-    return pygame.font.SysFont('montserrat', size)
+    return pygame.font.SysFont('lilita one', size)
 
 def evaluate_window(window, piece):
 	score = 0
@@ -325,7 +325,7 @@ def player_vs_player():
                 turn = turn % 2
                 
                 if game_over:
-                    game_over_options()
+                    pygame.time.wait(3000) # game_over_options()
                     
 					
 def player_vs_ai():
@@ -408,7 +408,7 @@ def player_vs_ai():
                 turn = turn % 2
 
         if game_over:
-            game_over_options()
+            pygame.time.wait(3000)
 
 def main_menu():
 
@@ -417,12 +417,12 @@ def main_menu():
         screen.blit(background_image, (0,0))
         MENU_MOUSE_POS = pygame.mouse.get_pos()
         
-        PVP_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(960, 300), 
-                            text_input="PLAYER VS PLAYER", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
-        PVAI_BUTTON = Button(image=pygame.image.load("resources/Button BG.png"), pos=(960, 450), 
-                            text_input="PLAYER VS AI", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
-        QUIT_BUTTON = Button(image=pygame.image.load("resources/Quit Button BG.png"), pos=(960, 600), 
-                            text_input="QUIT", font=get_font(64), base_color="#ffffff", hovering_color="#101B3B")
+        PVP_BUTTON = Button(image=None, pos=(960, 300), 
+                            text_input="PLAYER VS PLAYER", font=get_font(64), base_color="#ffffff", hovering_color="#D32735")
+        PVAI_BUTTON = Button(image=None, pos=(960, 450), 
+                            text_input="PLAYER VS AI", font=get_font(64), base_color="#ffffff", hovering_color="#D32735")
+        QUIT_BUTTON = Button(image=None, pos=(960, 600), 
+                            text_input="QUIT", font=get_font(64), base_color="#ffffff", hovering_color="#D32735")
         
         for button in [PVP_BUTTON, PVAI_BUTTON, QUIT_BUTTON]:
             button.changeColor(MENU_MOUSE_POS)
